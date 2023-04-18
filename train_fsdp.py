@@ -3,28 +3,21 @@ import time
 import torch
 import torchvision
 import timm
-# from torch import nn
-import torch.nn.functional as F
 
-from torchsummary import summary
 from torchvision import transforms
 from tqdm import tqdm
 
 import torch.optim as optim
 import torch.nn as nn
 
-from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 
 import functools
 from torch.distributed.fsdp.wrap import (
     size_based_auto_wrap_policy,
-    enable_wrap,
-    wrap,
 )
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-# from torch.distributed.fsdp.wrap import size_based_auto_wrap_policy
 
 dist.init_process_group("nccl")
 
@@ -37,7 +30,6 @@ WORKERS = 48
 IMG_DIMS = (336, 336)
 CLASSES = 10
 
-# MODEL_NAME = 'eva_large_patch14_336.in22k_ft_in22k_in1k'
 MODEL_NAME = 'resnet50d'
 
 transform = transforms.Compose([
@@ -58,12 +50,10 @@ data_loader = torch.utils.data.DataLoader(data,
 
 torch.cuda.set_device(local_rank)
 torch.cuda.empty_cache()
-# model = timm.create_model('eva_giant_patch14_560.m30m_ft_in22k_in1k', pretrained=True)
+
 model = timm.create_model(MODEL_NAME, pretrained=True, num_classes=CLASSES)
-# model = timm.create_model('resnet50d', pretrained=True, num_classes=256)
 
 model = model.to('cuda:' + str(local_rank))
-# model = DDP(model, device_ids=[local_rank])
 
 my_auto_wrap_policy = functools.partial(size_based_auto_wrap_policy,
                                         min_num_params=20000)
